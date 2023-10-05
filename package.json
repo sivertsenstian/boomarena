@@ -1,0 +1,21 @@
+{
+  "name": "boomarena",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@dimforge/rapier3d": "^0.11.2",
+    "three": "^0.157.0",
+    "three-mesh-bvh": "^0.6.7",
+    "three-pathfinding": "^1.2.0",
+    "three.quarks": "^0.10.9",
+    "typescript": "^5.2.2",
+    "vite": "^4.4.10"
+  }
+}
