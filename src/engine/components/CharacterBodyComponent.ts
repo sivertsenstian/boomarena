@@ -6,7 +6,7 @@ import { BufferGeometry, Material, Mesh } from 'three';
 export class CharacterBodyComponent extends BaseComponent {
   public object: Mesh;
 
-  constructor(name: string, material: Material, geometry: BufferGeometry) {
+  constructor(name: string, material: Material | Material[], geometry: BufferGeometry) {
     super(ComponentType.CharacterBody, name);
 
     this.object = new Mesh(geometry, material);

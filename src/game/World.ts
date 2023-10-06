@@ -17,22 +17,27 @@ export class World {
 
   public renderer: WebGLRenderer;
 
-  constructor(width: number, height: number, level: BaseLevel) {
+  constructor(scalar: number, level: BaseLevel) {
     this.level = level;
 
     this.renderer = new WebGLRenderer();
-    this.renderer.setSize(width, height);
+    this.renderer.setSize(window.innerWidth * scalar, window.innerHeight * scalar);
     this.renderer.domElement.style.margin = 'auto';
-    this.renderer.domElement.style.marginTop = String(height * 0.15);
-    this.renderer.domElement.style.border = '5px solid gray';
+    this.renderer.domElement.style.marginTop = String(window.innerHeight * scalar * 0.15);
+    this.renderer.domElement.style.border = '1px solid whitesmoke';
     this.renderer.domElement.style.boxShadow = '5px 3px 3px rgba(0,0,0,0.2)';
 
     this._stats = new Stats();
     document.body.appendChild(this._stats.dom);
+
+    window.onresize = () => {
+      this.renderer.setSize(window.innerWidth * scalar, window.innerHeight * scalar);
+      this.renderer.domElement.style.marginTop = String(window.innerHeight * scalar * 0.15);
+    };
   }
 
   init() {
-    document.body.style.backgroundColor = 'dimgray';
+    document.body.style.backgroundImage = 'linear-gradient(180deg, #252525, #404040)';
     document.body.appendChild(this.renderer.domElement);
 
     // Register basic inputs
@@ -42,7 +47,9 @@ export class World {
     const right = new Input('right', ['KeyD', 'ArrowRight']);
     const up = new Input('up', ['KeyW', 'ArrowUp']);
     const down = new Input('down', ['KeyS', 'ArrowDown']);
-    inputSystem.add(left, right, up, down);
+    const jump = new Input('jump', ['Space']);
+    const crouch = new Input('crouch', ['LeftShift', 'RightShift', 'KeyZ']);
+    inputSystem.add(left, right, up, down, jump, crouch);
 
     // initialize level
     this.level.ready();

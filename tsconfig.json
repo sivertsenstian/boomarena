@@ -20,7 +20,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "baseUrl": "./src/",
-    "typeRoots": ["node_modules/@types"],
+    "typeRoots": ["src/types", "node_modules/@types"],
     "paths": {
       "@/*": ["*"]
     }

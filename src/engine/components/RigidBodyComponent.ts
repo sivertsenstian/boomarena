@@ -6,7 +6,7 @@ import { ComponentType } from './types';
 export class RigidBodyComponent extends BaseComponent {
   public object: Mesh;
 
-  constructor(material: Material, geometry: BufferGeometry, name?: string) {
+  constructor(material: Material | Material[], geometry: BufferGeometry, name?: string) {
     super(ComponentType.RigidBody, name);
 
     this.object = new Mesh(geometry, material);

@@ -6,11 +6,24 @@
   InputManager,
   PointLightComponent,
   StaticBodyComponent,
+  TextureManager,
 } from '@/engine';
 import { BaseLevel } from '@/game';
-import { BoxGeometry, CapsuleGeometry, Color, Euler, MeshLambertMaterial, Vector3 } from 'three';
+import {
+  BackSide,
+  BoxGeometry,
+  CapsuleGeometry,
+  Color,
+  Euler,
+  FogExp2,
+  MeshBasicMaterial,
+  MeshLambertMaterial,
+  Vector3,
+} from 'three';
 
-class LightsEntity extends BaseEntity {
+import tst from '/textures/skybox/back.png';
+
+class Lights extends BaseEntity {
   constructor() {
     super();
   }
@@ -26,18 +39,17 @@ class LightsEntity extends BaseEntity {
   }
 }
 
-class PlayerEntity extends BaseEntity {
+class Player extends BaseEntity {
   private _speed = 0.015;
 
   private _input?: InputManager;
 
   constructor() {
-    super('Player');
+    super();
+    this._input = InputManager.getInstance();
   }
 
   ready() {
-    this._input = InputManager.getInstance();
-
     const body = new CharacterBodyComponent(
       'Body',
       new MeshLambertMaterial({ color: 0xcf6d17, wireframe: false }),
@@ -64,16 +76,16 @@ class PlayerEntity extends BaseEntity {
   }
 }
 
-class GroundEntity extends BaseEntity {
+class Ground extends BaseEntity {
   constructor() {
-    super('Ground');
+    super();
   }
 
   ready() {
     const body = new StaticBodyComponent(
+      'Body',
       new MeshLambertMaterial({ color: 0xffffff, wireframe: false }),
       new BoxGeometry(60, 0.25, 60),
-      'Body',
     );
 
     body.object.setRotationFromEuler(new Euler(0, Math.PI / 2, 0));
@@ -85,11 +97,19 @@ class GroundEntity extends BaseEntity {
 
 export class PlayGroundLevel extends BaseLevel {
   ready() {
-    this.background = new Color(0x202020);
+    this.fog = new FogExp2(0xcccccccc, 0.002);
+    this.background = TextureManager.getInstance().loadCubeTexture('/textures/skybox/', [
+      'ft.png',
+      'bk.png',
+      'up.png',
+      'dn.png',
+      'rt.png',
+      'lf.png',
+    ]);
 
     // this.addGameEntity(new CameraEntity('Camera1', new Vector3(50, 50, 0), new Vector3(0, 0, 0)));
-    this.addGameEntity(new LightsEntity());
-    this.addGameEntity(new PlayerEntity());
-    this.addGameEntity(new GroundEntity());
+    this.addGameEntity(new Lights());
+    this.addGameEntity(new Player());
+    this.addGameEntity(new Ground());
   }
 }
