@@ -11,10 +11,19 @@
   },
   "dependencies": {
     "@dimforge/rapier3d": "^0.11.2",
+    "@tweenjs/tween.js": "^21.0.0",
+    "lil-gui": "^0.18.2",
+    "lodash-es": "^4.17.21",
+    "stats.js": "^0.17.0",
     "three": "^0.157.0",
     "three-mesh-bvh": "^0.6.7",
     "three-pathfinding": "^1.2.0",
-    "three.quarks": "^0.10.9",
+    "three.quarks": "^0.10.9"
+  },
+  "devDependencies": {
+    "@types/lodash-es": "^4.17.9",
+    "@types/three": "^0.156.0",
+    "prettier": "^3.0.3",
     "typescript": "^5.2.2",
     "vite": "^4.4.10"
   }
