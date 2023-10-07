@@ -1,5 +1,4 @@
-﻿import { ComponentType } from './types';
-import { BaseComponent } from '@/engine';
+﻿import { BaseComponent, ComponentType } from '@/engine';
 
 export class AudioPlayerComponent extends BaseComponent {
   constructor(name?: string) {

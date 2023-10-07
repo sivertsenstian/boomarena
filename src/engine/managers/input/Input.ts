@@ -1,6 +1,10 @@
 ﻿import _uniqueId from 'lodash-es/uniqueId';
 
-import { IInput } from '@/engine/systems';
+export interface IInput {
+  id: string;
+  name: string;
+  events: string[];
+}
 
 export class Input implements IInput {
   public id: string;
@@ -8,8 +12,6 @@ export class Input implements IInput {
   public name: string;
 
   public events: string[];
-
-  public isPressed: boolean = false;
 
   constructor(name: string, events: string[] = []) {
     this.id = _uniqueId('boom_input_');

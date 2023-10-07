@@ -1,10 +1,9 @@
 ﻿import { Camera, PerspectiveCamera } from 'three';
 
-import { BaseComponent } from '@/engine';
-import { ComponentType } from './types';
+import { BaseComponent, ComponentType } from '@/engine';
 
 export class CameraComponent extends BaseComponent {
-  public object: Camera;
+  public instance: Camera;
 
   public isCurrent: boolean = false;
 
@@ -12,11 +11,11 @@ export class CameraComponent extends BaseComponent {
     name?: string,
     fov: number = 75,
     aspect: number = 16.0 / 9.0,
-    near = 0.1,
+    near = 0.5,
     far = 5000,
   ) {
     super(ComponentType.Camera, name);
 
-    this.object = new PerspectiveCamera(fov, aspect, near, far);
+    this.instance = new PerspectiveCamera(fov, aspect, near, far);
   }
 }

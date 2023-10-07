@@ -1,3 +1,5 @@
-﻿export * from './InputManager';
+﻿export * from './input';
+
 export * from './TextureManager';
-export * from './types';
+export * from './ModelManager';
+export * from './GUIManager';

@@ -1,6 +1,26 @@
 ﻿import _uniqueId from 'lodash-es/uniqueId';
-import { ComponentType, IComponent } from './types';
 import { Object3D } from 'three';
+
+export enum ComponentType {
+  Area,
+  AudioPlayer,
+  Camera,
+  CharacterBody,
+  CollisionShape,
+  Light,
+  RayCast,
+  RigidBody,
+  StaticBody,
+  Decal,
+  Controls,
+}
+
+export interface IComponent {
+  id: string;
+  name: string;
+  object?: Object3D;
+  type: ComponentType;
+}
 
 export abstract class BaseComponent implements IComponent {
   public readonly id: string;

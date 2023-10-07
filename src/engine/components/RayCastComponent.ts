@@ -1,5 +1,4 @@
-﻿import { BaseComponent } from '@/engine';
-import { ComponentType } from './types';
+﻿import { BaseComponent, ComponentType } from '@/engine';
 
 export class RayCastComponent extends BaseComponent {
   constructor(name?: string) {

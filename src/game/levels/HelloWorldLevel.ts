@@ -1,14 +1,6 @@
-﻿import {
-  AmbientLightComponent,
-  BaseEntity,
-  CameraComponent,
-  CharacterBodyComponent,
-  PointLightComponent,
-  RigidBodyComponent,
-  StaticBodyComponent,
-} from '@/engine';
+﻿import { AmbientLightComponent, BaseEntity, CameraComponent, RigidBodyComponent } from '@/engine';
 import { BaseLevel } from '@/game';
-import { BoxGeometry, Color, Euler, MeshBasicMaterial, MeshLambertMaterial, Vector3 } from 'three';
+import { BoxGeometry, Color, MeshBasicMaterial, Vector3 } from 'three';
 
 class CameraEntity extends BaseEntity {
   private _position: Vector3;
@@ -22,10 +14,10 @@ class CameraEntity extends BaseEntity {
     this.addComponent(new AmbientLightComponent('Ambient'));
   }
 
-  ready() {
+  async ready() {
     const c = this.getComponent<CameraComponent>(`Camera`);
-    c.object.position.set(this._position.x, this._position.y, this._position.z);
-    c.object.lookAt(new Vector3(0, 0, 0));
+    c.instance.position.set(this._position.x, this._position.y, this._position.z);
+    c.instance.lookAt(new Vector3(0, 0, 0));
   }
 }
 
@@ -34,12 +26,12 @@ class TestCubeEntity extends BaseEntity {
     super('TestCube');
   }
 
-  ready() {
-    const body = new RigidBodyComponent(
-      new MeshBasicMaterial({ color: 0xff69b4 }),
-      new BoxGeometry(1, 1, 1),
-      'Body',
-    );
+  async ready() {
+    const body = new RigidBodyComponent({
+      name: 'Body',
+      material: new MeshBasicMaterial({ color: 0xff69b4 }),
+      geometry: new BoxGeometry(1, 1, 1),
+    });
 
     this.addComponent(body);
   }
@@ -52,7 +44,7 @@ class TestCubeEntity extends BaseEntity {
 }
 
 export class HelloWorldLevel extends BaseLevel {
-  ready() {
+  async ready() {
     this.background = new Color(0x151515);
     this.addGameEntity(new CameraEntity());
     this.addGameEntity(new TestCubeEntity());

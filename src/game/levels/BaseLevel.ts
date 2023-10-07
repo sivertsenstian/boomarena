@@ -1,10 +1,12 @@
-﻿import { Scene } from 'three';
+﻿import { ColorRepresentation, Scene } from 'three';
 import _has from 'lodash-es/has';
 
-import { BaseEntity } from '@/engine';
+import { BaseEntity, IReady } from '@/engine';
 
-export class BaseLevel extends Scene {
+export class BaseLevel extends Scene implements IReady {
   private readonly _entities: { [key: string]: BaseEntity };
+
+  public backgroundColor: ColorRepresentation = 0xffffff;
 
   get entities(): { [key: string]: BaseEntity } {
     return this._entities;
@@ -15,7 +17,7 @@ export class BaseLevel extends Scene {
     this._entities = {};
   }
 
-  public ready() {}
+  public async ready() {}
 
   public addGameEntity(entity: BaseEntity) {
     this._entities[entity.id] = entity;

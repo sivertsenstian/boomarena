@@ -1,14 +1,13 @@
-﻿import { PointLight } from 'three';
+﻿import { ColorRepresentation, PointLight } from 'three';
 
-import { BaseComponent } from '@/engine';
-import { ComponentType } from '../types';
+import { BaseComponent, ComponentType } from '@/engine';
 
 export class PointLightComponent extends BaseComponent {
   public object: PointLight;
 
-  constructor(name?: string) {
+  constructor(name?: string, color: ColorRepresentation = 0xffffff, intensity = 1.0) {
     super(ComponentType.Light, name);
 
-    this.object = new PointLight(0xffffff);
+    this.object = new PointLight(color, intensity);
   }
 }
