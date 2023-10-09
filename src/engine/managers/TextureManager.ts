@@ -42,13 +42,14 @@ export class TextureManager {
   }
 
   public loadCubeTexture(path: string, sides: string[]) {
-    if (_has(this._textures, path)) {
-      return this._textures[path];
+    const p = path.endsWith('/') ? path : `${path}/`;
+    if (_has(this._textures, p)) {
+      return this._textures[p];
     }
 
     // Cache texture in collection for faster re-fetch and re-use
-    const texture = this._cubeTextureLoader.setPath(path).load(sides);
-    this._textures[path] = texture;
+    const texture = this._cubeTextureLoader.setPath(p).load(sides);
+    this._textures[p] = texture;
     return texture;
   }
 }

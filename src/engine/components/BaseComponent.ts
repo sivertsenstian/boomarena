@@ -12,7 +12,6 @@ export enum ComponentType {
   RigidBody,
   StaticBody,
   Decal,
-  Controls,
 }
 
 export interface IComponent {

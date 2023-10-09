@@ -4,9 +4,12 @@
   Euler,
   FogExp2,
   MathUtils,
+  MeshBasicMaterial,
   MeshStandardMaterial,
+  RepeatWrapping,
   SphereGeometry,
   Spherical,
+  Vector2,
   Vector3,
 } from 'three';
 
@@ -92,9 +95,9 @@ class Player extends UserControlledEntity {
     const body = new CharacterBodyComponent({
       name: 'Body',
       material: new MeshStandardMaterial({ shadowSide: 2 }),
-      geometry: new CapsuleGeometry(0.5, 0.9, 4, 8),
+      geometry: new CapsuleGeometry(0.5, 1, 4, 8),
     });
-    body.object.position.y = 0.65;
+    body.object.position.y = 0.75;
     body.object.castShadow = true;
     body.object.receiveShadow = true;
 
@@ -105,7 +108,7 @@ class Player extends UserControlledEntity {
       material: new MeshStandardMaterial({ shadowSide: 2, color: 0xffff00 }),
       geometry: new SphereGeometry(0.5),
     });
-    head.object.position.y = 1.8;
+    head.object.position.y = 2.0;
     this.addComponent(head);
 
     const camera = new CameraComponent('Camera');
@@ -134,10 +137,17 @@ class Ground extends BaseEntity {
 
   async ready() {
     const manager = ModelManager.getInstance();
+    const texture = TextureManager.getInstance();
 
+    // Floor
+    const bodyMap = texture.loadTexture('/textures/debug/dark/texture_03.png');
+    bodyMap.wrapS = bodyMap.wrapT = RepeatWrapping;
+    bodyMap.repeat.set(100, 100);
     const body = new StaticBodyComponent({
-      name: 'Body',
-      material: new MeshStandardMaterial(),
+      name: 'Floor',
+      material: new MeshStandardMaterial({
+        map: bodyMap,
+      }),
       geometry: new BoxGeometry(100, 1, 100),
     });
 
@@ -147,13 +157,32 @@ class Ground extends BaseEntity {
     body.object.position.set(0, -0.5, 0);
     this.addComponent(body);
 
+    // Debug Box
+    const boxMap = texture.loadTexture('/textures/debug/orange/texture_01.png');
+    boxMap.wrapS = boxMap.wrapT = RepeatWrapping;
+    boxMap.repeat.set(5, 5);
+    const box = new StaticBodyComponent({
+      name: 'DebugBox',
+      material: new MeshBasicMaterial({
+        map: boxMap,
+      }),
+      geometry: new BoxGeometry(5, 5, 5),
+    });
+
+    box.object.castShadow = true;
+    box.object.receiveShadow = true;
+    box.object.position.set(25, 2.5, 20);
+    this.addComponent(box);
+
+    // Import test - Tower
     const tower = new StaticBodyComponent({
       name: 'Tower',
-      object: await manager.loadGLTFModelBVH('/models/tower/tower.gltf'),
+      object: await manager.loadGLTFModel('/models/tower/tower.gltf'),
     });
     tower.object.scale.multiplyScalar(5);
     tower.object.position.y = 9.0;
-    // tower.object.children[0].visible = false;
+    // tower.object.children[0].visible = false; // visualizer
+    // tower.object.children[1].visible = false; // collider
 
     this.addComponent(tower);
   }
@@ -167,7 +196,7 @@ export class PlayGroundLevel extends BaseLevel {
 
   async ready() {
     this.fog = new FogExp2(this.backgroundColor, 0.02);
-    this.background = TextureManager.getInstance().loadCubeTexture('/textures/skybox/', [
+    this.background = TextureManager.getInstance().loadCubeTexture('/textures/skybox/basic', [
       'ft.png',
       'bk.png',
       'up.png',

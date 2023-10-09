@@ -11,7 +11,7 @@ export class CameraComponent extends BaseComponent {
     name?: string,
     fov: number = 75,
     aspect: number = 16.0 / 9.0,
-    near = 0.5,
+    near = 1.0,
     far = 5000,
   ) {
     super(ComponentType.Camera, name);

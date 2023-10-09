@@ -28,7 +28,6 @@ export abstract class BaseEntity extends Object3D implements IReady, IUpdate, IP
     this._components[component.id] = component;
 
     if (component.object !== undefined) {
-      component.object.add(new AxesHelper(1));
       this.add(component.object);
     }
   }

@@ -3,7 +3,6 @@
 import { Box3, Group, Mesh, MeshStandardMaterial, Object3D } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { MeshBVH, MeshBVHVisualizer, StaticGeometryGenerator } from 'three-mesh-bvh';
 
 export class ModelManager {
   private static instance: ModelManager;
@@ -34,25 +33,7 @@ export class ModelManager {
       this._gltfModelLoader.load(
         path,
         (gltf) => {
-          this._models[path] = gltf.scene;
-          resolve(gltf.scene);
-        },
-        undefined,
-        (error) => reject(error),
-      );
-    });
-  }
-
-  public loadGLTFModelBVH(path: string): Promise<Object3D> {
-    return new Promise((resolve, reject) => {
-      if (_has(this._models, path)) {
-        resolve(this._models[path]);
-      }
-
-      this._gltfModelLoader.load(
-        path,
-        (gltf) => {
-          let environment: any, collider: any, visualizer: any;
+          let environment: Group;
 
           const gltfScene = gltf.scene as any;
 
@@ -99,25 +80,7 @@ export class ModelManager {
             }
           }
 
-          const staticGenerator = new StaticGeometryGenerator(environment);
-          staticGenerator.attributes = ['position'];
-
-          const mergedGeometry = staticGenerator.generate();
-          mergedGeometry.boundsTree = new MeshBVH(mergedGeometry);
-
-          collider = new Mesh(mergedGeometry);
-          collider.material.wireframe = true;
-          collider.material.opacity = 0.5;
-          collider.material.transparent = true;
-
-          visualizer = new MeshBVHVisualizer(collider, 10);
-
-          const scene = new Group();
-          // scene.add(visualizer);
-          scene.add(collider);
-          scene.add(environment);
-
-          resolve(scene);
+          resolve(environment);
         },
         undefined,
         (error) => reject(error),

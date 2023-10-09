@@ -2,7 +2,15 @@
 import { PCFSoftShadowMap, SRGBColorSpace, WebGLRenderer } from 'three';
 import Stats from 'stats.js';
 
-import { CameraSystem, Input, InputManager, InputSystem, IReady, IWorld } from '@/engine';
+import {
+  CameraSystem,
+  CollisionSystem,
+  Input,
+  InputManager,
+  InputSystem,
+  IReady,
+  IWorld,
+} from '@/engine';
 import { BaseLevel } from './levels';
 
 export class World implements IWorld, IReady {
@@ -70,13 +78,14 @@ export class World implements IWorld, IReady {
 
     // const result = await this.renderer.domElement.requestPointerLock();
     this.renderer.domElement.addEventListener('click', async () => {
-      await this.renderer.domElement.requestPointerLock();
+      this.renderer.domElement.requestPointerLock();
     });
   }
 
   start() {
     const cameraSystem = new CameraSystem();
     const inputSystem = new InputSystem();
+    const collisionSystem = new CollisionSystem();
 
     this.renderer.setAnimationLoop((currentDelta) => {
       this._stats.update();
@@ -86,6 +95,7 @@ export class World implements IWorld, IReady {
         // Run systems
         cameraSystem.update(this, elapsed);
         inputSystem.update(this, elapsed);
+        collisionSystem.update(this, elapsed);
 
         _forEach(this.level.entities, (e) => e.update(elapsed));
 
