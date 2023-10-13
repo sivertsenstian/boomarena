@@ -135,17 +135,17 @@ class Ground extends BaseEntity {
     super();
   }
 
-  async ready() {
+  override async ready() {
     const manager = ModelManager.getInstance();
     const texture = TextureManager.getInstance();
 
     // Floor
-    const bodyMap = texture.loadTexture('/textures/debug/dark/texture_03.png');
+    const bodyMap = texture.loadTexture('/textures/debug/orange/texture_04.png');
     bodyMap.wrapS = bodyMap.wrapT = RepeatWrapping;
     bodyMap.repeat.set(100, 100);
     const body = new StaticBodyComponent({
       name: 'Floor',
-      material: new MeshStandardMaterial({
+      material: new MeshBasicMaterial({
         map: bodyMap,
       }),
       geometry: new BoxGeometry(100, 1, 100),
@@ -158,7 +158,7 @@ class Ground extends BaseEntity {
     this.addComponent(body);
 
     // Debug Box
-    const boxMap = texture.loadTexture('/textures/debug/orange/texture_01.png');
+    const boxMap = texture.loadTexture('/textures/debug/purple/texture_01.png');
     boxMap.wrapS = boxMap.wrapT = RepeatWrapping;
     boxMap.repeat.set(5, 5);
     const box = new StaticBodyComponent({
@@ -180,9 +180,8 @@ class Ground extends BaseEntity {
       object: await manager.loadGLTFModel('/models/tower/tower.gltf'),
     });
     tower.object.scale.multiplyScalar(5);
-    tower.object.position.y = 9.0;
-    // tower.object.children[0].visible = false; // visualizer
-    // tower.object.children[1].visible = false; // collider
+    tower.object.position.set(-30, 9.0, -10);
+    tower.object.setRotationFromEuler(new Euler(0, -Math.PI / 2, 0));
 
     this.addComponent(tower);
   }
@@ -194,7 +193,7 @@ export class PlayGroundLevel extends BaseLevel {
     this.backgroundColor = 0x263238 / 2;
   }
 
-  async ready() {
+  override async ready() {
     this.fog = new FogExp2(this.backgroundColor, 0.02);
     this.background = TextureManager.getInstance().loadCubeTexture('/textures/skybox/basic', [
       'ft.png',
@@ -208,5 +207,7 @@ export class PlayGroundLevel extends BaseLevel {
     this.addGameEntity(new Environment());
     this.addGameEntity(new Player());
     this.addGameEntity(new Ground());
+
+    await super.ready();
   }
 }

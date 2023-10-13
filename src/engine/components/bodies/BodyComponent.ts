@@ -24,9 +24,13 @@ export type BodyOptions = IObjectBodyOptions | IGeometryBodyOptions;
 export abstract class BodyComponent extends BaseComponent {
   public object: Object3D;
 
+  public isStatic: boolean;
+
   protected constructor(type: ComponentType, { name, material, geometry, object }: BodyOptions) {
     super(type, name);
 
     this.object = _isNil(object) ? new Mesh(geometry, material) : object;
+
+    this.isStatic = true;
   }
 }

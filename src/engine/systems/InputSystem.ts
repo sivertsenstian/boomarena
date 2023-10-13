@@ -2,9 +2,8 @@
 
 import { InputManager, IWorldUpdate } from '@/engine';
 import { World } from '@/game';
-import { ISystem } from './types';
 
-export class InputSystem implements ISystem, IWorldUpdate {
+export class InputSystem implements IWorldUpdate {
   private _input: InputManager;
 
   constructor() {

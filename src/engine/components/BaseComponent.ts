@@ -2,7 +2,7 @@
 import { Object3D } from 'three';
 
 export enum ComponentType {
-  Area,
+  AreaBody,
   AudioPlayer,
   Camera,
   CharacterBody,

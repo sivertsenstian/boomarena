@@ -1,8 +1,4 @@
-﻿import _forEach from 'lodash-es/forEach';
-import { PCFSoftShadowMap, SRGBColorSpace, WebGLRenderer } from 'three';
-import Stats from 'stats.js';
-
-import {
+﻿import {
   CameraSystem,
   CollisionSystem,
   Input,
@@ -10,47 +6,23 @@ import {
   InputSystem,
   IReady,
   IWorld,
+  PhysicsSystem,
+  StatsSystem,
 } from '@/engine';
 import { BaseLevel } from './levels';
+import { RenderingSystem } from '@/engine/systems/RenderingSystem';
 
 export class World implements IWorld, IReady {
   private _interval: number = 1000 / 60; // 60 fps
 
   private _previousDelta: number = 0;
 
-  private _stats: Stats;
-
   public level: BaseLevel;
 
-  public renderer: WebGLRenderer;
+  private _physicsSystem: PhysicsSystem = new PhysicsSystem();
 
-  constructor(scalar: number, level: BaseLevel) {
+  constructor(level: BaseLevel) {
     this.level = level;
-
-    this.renderer = new WebGLRenderer({ antialias: true });
-    this.renderer.setPixelRatio(window.devicePixelRatio);
-    this.renderer.setSize(window.innerWidth * scalar, window.innerHeight * scalar);
-    this.renderer.setClearColor(level.backgroundColor, 1);
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = PCFSoftShadowMap;
-    this.renderer.outputColorSpace = SRGBColorSpace;
-
-    // Renderer DOM ELEMENT
-    this.renderer.domElement.style.margin = 'auto';
-    this.renderer.domElement.style.marginTop = String(window.innerHeight * scalar * 0.15);
-    this.renderer.domElement.style.border = '1px solid whitesmoke';
-    this.renderer.domElement.style.boxShadow = '5px 3px 3px rgba(0,0,0,0.2)';
-
-    this._stats = new Stats();
-    document.body.appendChild(this._stats.dom);
-
-    document.body.style.backgroundImage = 'linear-gradient(180deg, #252525, #404040)';
-    document.body.appendChild(this.renderer.domElement);
-
-    window.onresize = () => {
-      this.renderer.setSize(window.innerWidth * scalar, window.innerHeight * scalar);
-      this.renderer.domElement.style.marginTop = String(window.innerHeight * scalar * 0.15);
-    };
   }
 
   async ready() {
@@ -73,22 +45,19 @@ export class World implements IWorld, IReady {
     // initialize level
     await this.level.ready();
 
-    // initialize all entities in level
-    _forEach(this.level.entities, (e) => e.ready());
-
-    // const result = await this.renderer.domElement.requestPointerLock();
-    this.renderer.domElement.addEventListener('click', async () => {
-      this.renderer.domElement.requestPointerLock();
-    });
+    // Initialize systems
+    await this._physicsSystem.ready(this);
   }
 
   start() {
+    const statsSystem = new StatsSystem();
+    const renderingSystem = new RenderingSystem(0.8, this.level.backgroundColor);
     const cameraSystem = new CameraSystem();
     const inputSystem = new InputSystem();
     const collisionSystem = new CollisionSystem();
 
-    this.renderer.setAnimationLoop((currentDelta) => {
-      this._stats.update();
+    renderingSystem.getRenderer().setAnimationLoop((currentDelta) => {
+      statsSystem.update(currentDelta);
 
       const elapsed = currentDelta - this._previousDelta;
       if (elapsed > this._interval) {
@@ -96,14 +65,18 @@ export class World implements IWorld, IReady {
         cameraSystem.update(this, elapsed);
         inputSystem.update(this, elapsed);
         collisionSystem.update(this, elapsed);
+        this._physicsSystem.update(this, elapsed);
 
-        _forEach(this.level.entities, (e) => e.update(elapsed));
+        // Replace with system update calls..
+        // _forEach(this.level.entities, (e) => e.update(elapsed));
 
         this._previousDelta = currentDelta;
-        this.renderer.render(this.level, cameraSystem.getCurrent());
+        renderingSystem.getRenderer().render(this.level, cameraSystem.getCurrent());
       }
     });
   }
 
-  stop = () => this.renderer.setAnimationLoop(null);
+  stop = (): void => {
+    // renderingSystem.stop();
+  };
 }

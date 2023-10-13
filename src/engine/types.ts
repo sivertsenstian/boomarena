@@ -11,14 +11,16 @@ export interface IUpdate {
   update(delta: number): void;
 }
 
+export interface IWorldReady {
+  ready(world: IWorld, delta: number): Promise<void>;
+}
+
 export interface IWorldUpdate {
   update(world: IWorld, delta: number): void;
 }
 
 export interface IWorld {
   level: BaseLevel;
-
-  renderer: WebGLRenderer;
 
   start(): void;
 
@@ -27,4 +29,8 @@ export interface IWorld {
 
 export interface IProcessInput {
   processInput(event: InputEvent): void;
+}
+
+export interface IProcessPhysics {
+  processPhysics(delta: number): void;
 }

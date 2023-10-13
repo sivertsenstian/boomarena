@@ -1,8 +1,8 @@
 ﻿import { World } from '@/game';
-import { IMessage, ISystem } from './types';
+import { IMessage } from './types';
 import { IWorldUpdate } from '@/engine';
 
-export class MessageSystem implements ISystem, IWorldUpdate {
+export class MessageSystem implements IWorldUpdate {
   private readonly _messages: IMessage[];
 
   constructor() {

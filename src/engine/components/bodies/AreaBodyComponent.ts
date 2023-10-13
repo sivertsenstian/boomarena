@@ -1,8 +1,8 @@
 ﻿import { BodyComponent, BodyOptions, ComponentType } from '@/engine';
 
-export class StaticBodyComponent extends BodyComponent {
+export class AreaBodyComponent extends BodyComponent {
   constructor(options: BodyOptions) {
-    super(ComponentType.StaticBody, options);
+    super(ComponentType.AreaBody, options);
     this.isStatic = true;
   }
 }

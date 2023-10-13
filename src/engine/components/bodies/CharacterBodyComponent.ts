@@ -3,5 +3,6 @@
 export class CharacterBodyComponent extends BodyComponent {
   constructor(options: BodyOptions) {
     super(ComponentType.CharacterBody, options);
+    this.isStatic = false;
   }
 }

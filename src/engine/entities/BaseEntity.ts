@@ -4,10 +4,21 @@ import _filter from 'lodash-es/filter';
 import _some from 'lodash-es/some';
 import _uniqueId from 'lodash-es/uniqueId';
 
-import { AxesHelper, Object3D } from 'three';
+import { Object3D } from 'three';
 
-import { ComponentType, IComponent, InputEvent, IProcessInput, IReady, IUpdate } from '@/engine';
-export abstract class BaseEntity extends Object3D implements IReady, IUpdate, IProcessInput {
+import {
+  ComponentType,
+  IComponent,
+  InputEvent,
+  IProcessInput,
+  IProcessPhysics,
+  IReady,
+  IUpdate,
+} from '@/engine';
+export abstract class BaseEntity
+  extends Object3D
+  implements IReady, IUpdate, IProcessInput, IProcessPhysics
+{
   private readonly _components: { [key: string]: IComponent };
 
   public processingInputEvents: boolean = false;
@@ -22,7 +33,9 @@ export abstract class BaseEntity extends Object3D implements IReady, IUpdate, IP
 
   public update(_delta: number) {}
 
-  processInput(event: InputEvent) {}
+  processInput(_event: InputEvent) {}
+
+  processPhysics(_delta: number) {}
 
   public addComponent(component: IComponent) {
     this._components[component.id] = component;
