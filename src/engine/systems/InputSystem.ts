@@ -1,21 +1,19 @@
-﻿import _filter from 'lodash-es/filter';
-
-import { InputManager, IWorldUpdate } from '@/engine';
+﻿import { BaseSystem, ComponentType, InputComponent, IWorldUpdate } from '@/engine';
 import { World } from '@/game';
+import _forEach from 'lodash-es/forEach';
 
-export class InputSystem implements IWorldUpdate {
-  private _input: InputManager;
-
+export class InputSystem extends BaseSystem implements IWorldUpdate {
   constructor() {
-    this._input = InputManager.getInstance();
+    super();
   }
 
-  public update(world: World, _delta: number) {
-    const events = this._input.getEvents();
-    if (events.length > 0) {
-      _filter(world.level.entities, 'processingInputEvents').forEach((entity) =>
-        events.map((e) => entity.processInput(e)),
-      );
-    }
+  public update(world: World, delta: number) {
+    super.register(world, ComponentType.Input);
+
+    // Process registered input events
+    _forEach(this._entities, (e) => {
+      const input = e.getComponentByType<InputComponent>(ComponentType.Input);
+      input.processInput(delta);
+    });
   }
 }

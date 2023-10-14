@@ -11,6 +11,7 @@
 } from '@/engine';
 import { BaseLevel } from './levels';
 import { RenderingSystem } from '@/engine/systems/RenderingSystem';
+import { MovementSystem } from '@/engine/systems/MovementSystem';
 
 export class World implements IWorld, IReady {
   private _interval: number = 1000 / 60; // 60 fps
@@ -55,6 +56,7 @@ export class World implements IWorld, IReady {
     const cameraSystem = new CameraSystem();
     const inputSystem = new InputSystem();
     const collisionSystem = new CollisionSystem();
+    const movementSystem = new MovementSystem();
 
     renderingSystem.getRenderer().setAnimationLoop((currentDelta) => {
       statsSystem.update(currentDelta);
@@ -62,13 +64,12 @@ export class World implements IWorld, IReady {
       const elapsed = currentDelta - this._previousDelta;
       if (elapsed > this._interval) {
         // Run systems
+        renderingSystem.update(this, elapsed);
         cameraSystem.update(this, elapsed);
         inputSystem.update(this, elapsed);
         collisionSystem.update(this, elapsed);
         this._physicsSystem.update(this, elapsed);
-
-        // Replace with system update calls..
-        // _forEach(this.level.entities, (e) => e.update(elapsed));
+        movementSystem.update(this, elapsed);
 
         this._previousDelta = currentDelta;
         renderingSystem.getRenderer().render(this.level, cameraSystem.getCurrent());

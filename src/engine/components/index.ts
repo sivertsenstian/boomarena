@@ -5,3 +5,5 @@ export * from './CollisionShapeComponent';
 export * from './RayCastComponent';
 export * from './lights';
 export * from './bodies';
+export * from './MovementComponent';
+export * from './InputComponent';

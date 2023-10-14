@@ -4,73 +4,52 @@ import _filter from 'lodash-es/filter';
 import _some from 'lodash-es/some';
 import _uniqueId from 'lodash-es/uniqueId';
 
-import { Object3D } from 'three';
+import { ComponentType, IComponent, IReady } from '@/engine';
+export abstract class BaseEntity implements IReady {
+  public readonly components: { [key: string]: IComponent };
 
-import {
-  ComponentType,
-  IComponent,
-  InputEvent,
-  IProcessInput,
-  IProcessPhysics,
-  IReady,
-  IUpdate,
-} from '@/engine';
-export abstract class BaseEntity
-  extends Object3D
-  implements IReady, IUpdate, IProcessInput, IProcessPhysics
-{
-  private readonly _components: { [key: string]: IComponent };
+  public id: string;
 
-  public processingInputEvents: boolean = false;
+  public name: string;
 
   protected constructor(name?: string) {
-    super();
-    this.name = name ?? _uniqueId(`__${this.constructor.name}`);
-    this._components = {};
+    this.id = _uniqueId(`boom_entity_id_`);
+    this.name = name ?? _uniqueId(`_unnamed_${this.constructor.name}_`);
+    this.components = {};
   }
 
   public async ready() {}
 
-  public update(_delta: number) {}
-
-  processInput(_event: InputEvent) {}
-
-  processPhysics(_delta: number) {}
-
   public addComponent(component: IComponent) {
-    this._components[component.id] = component;
-
-    if (component.object !== undefined) {
-      this.add(component.object);
-    }
+    this.components[component.id] = component;
   }
 
   public removeComponent(component: IComponent) {
-    delete this._components?.[component.id];
+    delete this.components?.[component.id];
   }
 
   public hasComponentWithType(type: ComponentType) {
-    return _some(this._components, (x) => x.type === type);
+    return _some(this.components, (x) => x.type === type);
   }
 
   public getComponentsByType<T extends IComponent>(type: ComponentType) {
-    return _filter(this._components, (x) => x.type === type) as T[];
+    return _filter(this.components, (x) => x.type === type) as T[];
   }
 
   public getComponentByType<T extends IComponent>(type: ComponentType): T {
-    return _find(this._components, (x) => x.type === type) as T;
+    return _find(this.components, (x) => x.type === type) as T;
   }
 
   public getComponentById<T extends IComponent>(id: string) {
-    return this._components?.[id] as T;
+    return this.components?.[id] as T;
   }
 
   public getComponent<T extends IComponent>(name: string): T {
-    const found = _find(this._components, (x) => x.name.toLowerCase() === name.toLowerCase()) as T;
+    const found = _find(this.components, (x) => x.name.toLowerCase() === name.toLowerCase()) as T;
     if (!found) {
       throw Error(
         `Component with name ${name} not found for entity ${this.name}, found: ${_map(
-          this._components,
+          this.components,
           (c) => c.name,
         )}`,
       );

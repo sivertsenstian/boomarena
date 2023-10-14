@@ -22,6 +22,7 @@ import RAPIER, {
 
 import { World } from '@/game';
 import {
+  BaseSystem,
   BodyComponent,
   ComponentType,
   GUIManager,
@@ -29,21 +30,24 @@ import {
   IWorldUpdate,
   StaticBodyComponent,
 } from '@/engine';
-import _flatMap from 'lodash-es/flatMap';
 import { MeshBVH, StaticGeometryGenerator } from 'three-mesh-bvh';
+import _forEach from 'lodash-es/forEach';
+import _isNil from 'lodash-es/isNil';
 
-export class PhysicsSystem implements IWorldReady, IWorldUpdate {
+export class PhysicsSystem extends BaseSystem implements IWorldReady, IWorldUpdate {
   private _physics?: RapierWorld;
+  private _gravity = new Vector3(0, -9.81, 0);
   private lines?: LineSegments;
-  private _registered: { [key: string]: BodyComponent };
+  private readonly _added: { [key: string]: boolean };
 
   public showPhysics = true;
   private rigidBody?: RigidBody;
   private sphere?: Mesh;
 
   constructor() {
-    this._registered = {};
+    super();
 
+    this._added = {};
     const gui = GUIManager.getInstance();
     const folder = gui.addFolder('PhysicsSystem');
     folder.add(this, 'showPhysics');
@@ -70,15 +74,14 @@ export class PhysicsSystem implements IWorldReady, IWorldUpdate {
   public async ready(world: World) {
     await RAPIER;
 
-    let gravity = new Vector3(0, -9.81, 0);
-    this._physics = new RapierWorld(gravity);
+    // let gravity = new Vector3(0, -9.81, 0);
 
     // Test
-    const geometry = new SphereGeometry(1, 32, 16);
-    const material = new MeshStandardMaterial({ color: 0xffffff });
-    this.sphere = new Mesh(geometry, material);
-    this.sphere.castShadow = true;
-    world.level.add(this.sphere);
+    // const geometry = new SphereGeometry(1, 32, 16);
+    // const material = new MeshStandardMaterial({ color: 0xffffff });
+    // this.sphere = new Mesh(geometry, material);
+    // this.sphere.castShadow = true;
+    // world.level.add(this.sphere);
 
     // Physics
     // let groundColliderDesc = ColliderDesc.cuboid(50.0, 0.5, 50.0);
@@ -88,16 +91,16 @@ export class PhysicsSystem implements IWorldReady, IWorldUpdate {
     // groundColliderDesc.setRotation(new Quaternion(1.0, 0.2, 0, 0));
     // this._physics.createCollider(groundColliderDesc);
     //
-    let rigidBodyDesc = RigidBodyDesc.dynamic().setTranslation(0.0, 15.0, 0.0).setCcdEnabled(true);
-    //
-    this.rigidBody = this._physics.createRigidBody(rigidBodyDesc);
-    this.rigidBody.setLinvel(new Vector3(10, 0, 10), true);
+    // let rigidBodyDesc = RigidBodyDesc.dynamic().setTranslation(0.0, 15.0, 0.0).setCcdEnabled(true);
+    // //
+    // this.rigidBody = this._physics.createRigidBody(rigidBodyDesc);
+    // this.rigidBody.setLinvel(new Vector3(10, 0, 10), true);
     //
     // this.sphere.geometry.computeBoundingBox();
     // this.sphere.geometry.computeBoundingSphere();
     //
-    this.sphere.geometry.computeBoundingSphere();
-    const boundingS = this.sphere.geometry.boundingSphere;
+    // this.sphere.geometry.computeBoundingSphere();
+    // const boundingS = this.sphere.geometry.boundingSphere;
     // const boundingB = this.sphere.geometry.boundingBox;
     // console.log({
     //   tree: this.sphere.geometry.boundsTree,
@@ -105,13 +108,13 @@ export class PhysicsSystem implements IWorldReady, IWorldUpdate {
     //   sphere: this.sphere.geometry.boundingSphere,
     // });
     //
-    let colliderDesc = ColliderDesc.ball(boundingS!.radius);
+    // let colliderDesc = ColliderDesc.ball(boundingS!.radius);
     // let colliderDesc = RAPIER.ColliderDesc.cuboid(...boundingB?.max.toArray());
     // let colliderDesc = RAPIER.ColliderDesc.trimesh(
     //   this.sphere.geometry.getAttribute('position')?.array as any,
     //   this.sphere.geometry.getIndex()?.array as any,
     // );
-    let collider = this._physics.createCollider(colliderDesc, this.rigidBody);
+    // let collider = this._physics.createCollider(colliderDesc, this.rigidBody);
   }
 
   public update(world: World, delta: number) {
@@ -132,34 +135,52 @@ export class PhysicsSystem implements IWorldReady, IWorldUpdate {
       this.lines.geometry.setAttribute('color', new BufferAttribute(buffers.colors, 4));
       // END DEBUG
 
-      const components: StaticBodyComponent[] = _flatMap(world.level.entities, (e) =>
-        e.getComponentsByType(ComponentType.StaticBody),
-      );
+      const types = [ComponentType.CharacterBody, ComponentType.StaticBody];
+      super.register(world, ...types);
 
-      components
-        .filter((c) => !_has(this._registered, c.id))
-        .forEach((c) => {
-          const geometry = this.mergeGeometry(c.object);
-          const collision = this.createCollider(geometry);
-          collision.geometry.computeBoundingBox();
-          const bounds = (c.object as Mesh)?.geometry?.boundingBox?.max;
-          if (bounds) {
-            let colliderDesc = ColliderDesc.cuboid(bounds.x, bounds.y, bounds.z).setTranslation(
-              c.object.position.x,
-              c.object.position.y,
-              c.object.position.z,
-            );
-            this._physics?.createCollider(colliderDesc);
-            this._registered[c.id] = c;
-          }
-        });
+      // Process all entities
+      _forEach(this._entities, (entity) => {
+        if (!this._added?.[entity.id]) {
+          types.forEach((type) => {
+            this._added[entity.id] = true;
+            entity
+              .getComponentsByType(type)
+              .filter((c) => !_isNil(c.object))
+              .forEach((c) => world.level.add(c.object!));
+          });
+        }
+      });
+
+      // const components: StaticBodyComponent[] = _flatMap(world.level.entities, (e) =>
+      //   e.getComponentsByType(ComponentType.StaticBody),
+      // );
+
+      // components
+      //   .filter((c) => !_has(this._registered, c.id))
+      //   .forEach((c) => {
+      //     const geometry = this.mergeGeometry(c.object);
+      //     const collision = this.createCollider(geometry);
+      //     collision.geometry.computeBoundingBox();
+      //     const bounds = (c.object as Mesh)?.geometry?.boundingBox?.max;
+      //     if (bounds) {
+      //       let colliderDesc = ColliderDesc.cuboid(bounds.x, bounds.y, bounds.z).setTranslation(
+      //         c.object.position.x,
+      //         c.object.position.y,
+      //         c.object.position.z,
+      //       );
+      //       this._physics?.createCollider(colliderDesc);
+      //       this._registered[c.id] = c;
+      //     }
+      //   });
 
       this._physics.step();
 
-      const pos = this.rigidBody?.translation();
-      if (pos) {
-        this.sphere?.position.set(pos.x, pos.y, pos.z);
-      }
+      // const pos = this.rigidBody?.translation();
+      // if (pos) {
+      //   this.sphere?.position.set(pos.x, pos.y, pos.z);
+      // }
+    } else {
+      this._physics = new RapierWorld(this._gravity);
     }
   }
 }

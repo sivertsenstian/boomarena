@@ -1,5 +1,4 @@
-﻿import _values from 'lodash-es/values';
-import _filter from 'lodash-es/filter';
+﻿import _filter from 'lodash-es/filter';
 import _has from 'lodash-es/has';
 import { Vector3 } from 'three';
 import { IInput, InputEvent } from '@/engine';
@@ -11,14 +10,11 @@ export class InputManager {
 
   private readonly _inputs: { [key: string]: IInput };
 
-  private readonly _events: { [key: string]: InputEvent };
-
   private _active: { [key: string]: IInput };
 
   private constructor() {
     this._inputs = {};
     this._active = {};
-    this._events = {};
 
     let wheelEventEndTimeout: number;
     window.onwheel = (event) => {
@@ -35,6 +31,7 @@ export class InputManager {
         wheelEventEndTimeout = setTimeout(() => {
           inputs.forEach((active) => {
             delete this._active[active.name];
+            this._inputs[active.name].input = undefined;
           });
         }, 1000 / 60);
 
@@ -43,12 +40,14 @@ export class InputManager {
             .filter((i) => i.events.filter((e) => e.toLowerCase() === 'mousewheelforward'))
             .forEach((active) => {
               this._active[active.name] = active;
+              active.input = event;
             });
         } else if (event.deltaY < 0) {
           inputs
             .filter((i) => i.events.filter((e) => e.toLowerCase() === 'mousewheelback'))
             .forEach((active) => {
               this._active[active.name] = active;
+              active.input = event;
             });
         }
       }
@@ -65,6 +64,7 @@ export class InputManager {
         if (!_has(this._active, active.name)) {
           this._active[active.name] = active;
         }
+        active.input = event;
       });
     };
 
@@ -77,19 +77,12 @@ export class InputManager {
           ).length > 0,
       ).forEach((active) => {
         delete this._active[active.name];
+        this._inputs[active.name].input = undefined;
       });
     };
 
     let pointerMoveEventEndTimeout: number;
-    let pointerMoveEventTimeout: number;
     window.onpointermove = (event) => {
-      // Register event as active
-      clearTimeout(pointerMoveEventTimeout);
-      this._events[event.type] = event;
-      pointerMoveEventTimeout = setTimeout(() => {
-        delete this._events[event.type];
-      }, 1000 / 60);
-
       // Handle active registered inputs for this event
       const inputs = _filter(
         this._inputs,
@@ -101,6 +94,7 @@ export class InputManager {
         pointerMoveEventEndTimeout = setTimeout(() => {
           inputs.forEach((active) => {
             delete this._active[active.name];
+            this._inputs[active.name].input = undefined;
           });
         }, 1000 / 60);
 
@@ -111,6 +105,7 @@ export class InputManager {
           if (!_has(this._active, active.name)) {
             this._active[active.name] = active;
           }
+          active.input = event;
         });
       }
     };
@@ -123,6 +118,7 @@ export class InputManager {
         if (!_has(this._active, active.name)) {
           this._active[active.name] = active;
         }
+        active.input = event;
       });
     };
 
@@ -132,6 +128,7 @@ export class InputManager {
         (i) => i.events.filter((e) => e.toLowerCase() === event.code.toLowerCase()).length > 0,
       ).forEach((active) => {
         delete this._active[active.name];
+        this._inputs[active.name].input = undefined;
       });
     };
 
@@ -180,7 +177,11 @@ export class InputManager {
     return _has(this._active, name);
   }
 
-  public getEvents() {
-    return _values(this._events);
+  public getActiveAction(name: string): IInput | undefined {
+    return this._active?.[name];
+  }
+
+  public getActiveActionEvent(name: string): InputEvent | undefined {
+    return this._active?.[name]?.input;
   }
 }

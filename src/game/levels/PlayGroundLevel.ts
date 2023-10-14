@@ -4,12 +4,12 @@
   Euler,
   FogExp2,
   MathUtils,
+  Mesh,
   MeshBasicMaterial,
   MeshStandardMaterial,
   RepeatWrapping,
   SphereGeometry,
   Spherical,
-  Vector2,
   Vector3,
 } from 'three';
 
@@ -23,19 +23,88 @@ import {
   InputManager,
   StaticBodyComponent,
   TextureManager,
-  UserControlledEntity,
   ModelManager,
-  InputEvent,
-  InputEventType,
+  MovementComponent,
+  InputComponent,
+  Constants,
 } from '@/engine';
 import { BaseLevel } from '@/game';
+
+class Player extends BaseEntity {
+  constructor() {
+    super();
+  }
+
+  async ready() {
+    const inputManager = InputManager.getInstance();
+
+    const camera = new CameraComponent('Camera');
+    camera.isCurrent = true;
+    this.addComponent(camera);
+
+    const model = new Mesh(
+      new CapsuleGeometry(0.5, 1, 4, 8),
+      new MeshStandardMaterial({ shadowSide: 2 }),
+    );
+
+    const head = new Mesh(
+      new SphereGeometry(0.5),
+      new MeshStandardMaterial({ shadowSide: 2, color: 0xffff00 }),
+    );
+    head.position.y = 1.5;
+
+    // TODO: Attach camera to head - find a better/more ECS way for his ?
+    head.add(camera.instance);
+    // Attach head to root model
+    model.add(head);
+
+    const body = new CharacterBodyComponent({ name: 'PlayerModel', object: model });
+    this.addComponent(body);
+
+    const movement = new MovementComponent();
+    movement.speed = 0.015;
+    movement.position = new Vector3(0, 0.75, 0);
+    this.addComponent(movement);
+
+    const userInput = new InputComponent('UserInput', (delta: number) => {
+      const direction = inputManager?.getDirection('left', 'right', 'up', 'down');
+      if (direction !== undefined) {
+        const s = new Spherical();
+        const angle = model.getWorldDirection(Constants.ZeroVector);
+        s.setFromVector3(angle);
+        direction.applyAxisAngle(Constants.UpVector, s.theta);
+        movement.position.addScaledVector(direction, movement.speed * delta);
+      }
+
+      const event = inputManager.getActiveActionEvent('look');
+      if (event !== undefined) {
+        const x = (event as PointerEvent).movementX;
+        const y = (event as PointerEvent).movementY;
+        const sens = 2.0;
+
+        head.rotateX(-MathUtils.degToRad(y) * sens);
+        head.rotation.x = MathUtils.clamp(
+          head.rotation.x,
+          MathUtils.degToRad(-89),
+          MathUtils.degToRad(90),
+        );
+        model.rotateY(-MathUtils.degToRad(x) * sens);
+      }
+    });
+    this.addComponent(userInput);
+  }
+}
 
 class Environment extends BaseEntity {
   constructor() {
     super();
   }
 
-  async ready() {
+  override async ready() {
+    const manager = ModelManager.getInstance();
+    const texture = TextureManager.getInstance();
+
+    // Lights & Camera
     this.addComponent(new AmbientLightComponent('Ambient', 0xffffff, 0.5));
 
     const light = new DirectionalLightComponent('Light');
@@ -60,84 +129,6 @@ class Environment extends BaseEntity {
     camera.instance.lookAt(new Vector3(0, 0, 0));
     camera.isCurrent = false;
     this.addComponent(camera);
-  }
-}
-
-class Player extends UserControlledEntity {
-  private _speed = 0.015;
-
-  private _input?: InputManager;
-
-  constructor() {
-    super();
-    this._input = InputManager.getInstance();
-    this.up = new Vector3(0, 1, 0);
-  }
-
-  processInput(event: InputEvent) {
-    if (event.type === InputEventType.PointerEvent) {
-      const x = (event as PointerEvent).movementX;
-      const y = (event as PointerEvent).movementY;
-      const sens = 2.0;
-
-      const head = this.getComponent<CharacterBodyComponent>('Head');
-      head.object.rotateX(-MathUtils.degToRad(y) * sens);
-      head.object.rotation.x = MathUtils.clamp(
-        head.object.rotation.x,
-        MathUtils.degToRad(-89),
-        MathUtils.degToRad(90),
-      );
-      this.rotateY(-MathUtils.degToRad(x) * sens);
-    }
-  }
-
-  async ready() {
-    const body = new CharacterBodyComponent({
-      name: 'Body',
-      material: new MeshStandardMaterial({ shadowSide: 2 }),
-      geometry: new CapsuleGeometry(0.5, 1, 4, 8),
-    });
-    body.object.position.y = 0.75;
-    body.object.castShadow = true;
-    body.object.receiveShadow = true;
-
-    this.addComponent(body);
-
-    const head = new CharacterBodyComponent({
-      name: 'Head',
-      material: new MeshStandardMaterial({ shadowSide: 2, color: 0xffff00 }),
-      geometry: new SphereGeometry(0.5),
-    });
-    head.object.position.y = 2.0;
-    this.addComponent(head);
-
-    const camera = new CameraComponent('Camera');
-    camera.isCurrent = true;
-    this.addComponent(camera);
-
-    head.object.add(camera.instance);
-  }
-
-  update(delta: number) {
-    const direction = this._input?.getDirection('left', 'right', 'up', 'down');
-    if (direction !== undefined) {
-      const s = new Spherical();
-      const angle = this.getWorldDirection(new Vector3());
-      s.setFromVector3(angle);
-      direction.applyAxisAngle(new Vector3(0, 1, 0), s.theta);
-      this.position.addScaledVector(direction, this._speed * delta);
-    }
-  }
-}
-
-class Ground extends BaseEntity {
-  constructor() {
-    super();
-  }
-
-  override async ready() {
-    const manager = ModelManager.getInstance();
-    const texture = TextureManager.getInstance();
 
     // Floor
     const bodyMap = texture.loadTexture('/textures/debug/orange/texture_04.png');
@@ -151,8 +142,6 @@ class Ground extends BaseEntity {
       geometry: new BoxGeometry(100, 1, 100),
     });
 
-    body.object.castShadow = true;
-    body.object.receiveShadow = true;
     body.object.setRotationFromEuler(new Euler(0, Math.PI / 2, 0));
     body.object.position.set(0, -0.5, 0);
     this.addComponent(body);
@@ -169,8 +158,6 @@ class Ground extends BaseEntity {
       geometry: new BoxGeometry(5, 5, 5),
     });
 
-    box.object.castShadow = true;
-    box.object.receiveShadow = true;
     box.object.position.set(25, 2.5, 20);
     this.addComponent(box);
 
@@ -182,7 +169,6 @@ class Ground extends BaseEntity {
     tower.object.scale.multiplyScalar(5);
     tower.object.position.set(-30, 9.0, -10);
     tower.object.setRotationFromEuler(new Euler(0, -Math.PI / 2, 0));
-
     this.addComponent(tower);
   }
 }
@@ -206,7 +192,6 @@ export class PlayGroundLevel extends BaseLevel {
 
     this.addGameEntity(new Environment());
     this.addGameEntity(new Player());
-    this.addGameEntity(new Ground());
 
     await super.ready();
   }

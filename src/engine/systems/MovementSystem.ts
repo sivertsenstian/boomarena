@@ -1,23 +1,27 @@
-﻿import _flatMap from 'lodash-es/flatMap';
-
-import { ComponentType, GUIManager, IWorldUpdate, StaticBodyComponent } from '@/engine';
+﻿import {
+  BaseSystem,
+  CharacterBodyComponent,
+  ComponentType,
+  IWorldUpdate,
+  MovementComponent,
+} from '@/engine';
 import { World } from '@/game';
+import _forEach from 'lodash-es/forEach';
 
-export class MovementSystem implements IWorldUpdate {
-  public showCollisions = true;
-
-  public showVisualizers = true;
-
+export class MovementSystem extends BaseSystem implements IWorldUpdate {
   constructor() {
-    const gui = GUIManager.getInstance();
-    const folder = gui.addFolder('CollisionSystem');
-    folder.add(this, 'showCollisions');
-    folder.add(this, 'showVisualizers');
+    super();
   }
 
-  public update(world: World, _delta: number) {
-    const components: StaticBodyComponent[] = _flatMap(world.level.entities, (e) =>
-      e.getComponentsByType(ComponentType.StaticBody),
-    );
+  public update(world: World, delta: number) {
+    super.register(world, ComponentType.Movement);
+
+    // Process movement for entities with a character body
+    _forEach(this._entities, (entity) => {
+      const movement = entity.getComponentByType<MovementComponent>(ComponentType.Movement);
+      const body = entity.getComponentByType<CharacterBodyComponent>(ComponentType.CharacterBody);
+      body.object.position.set(...movement.position.toArray());
+      // Apply physics ??
+    });
   }
 }

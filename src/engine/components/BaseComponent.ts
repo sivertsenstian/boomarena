@@ -12,6 +12,8 @@ export enum ComponentType {
   RigidBody,
   StaticBody,
   Decal,
+  Movement,
+  Input,
 }
 
 export interface IComponent {
@@ -31,8 +33,8 @@ export abstract class BaseComponent implements IComponent {
   public readonly object?: Object3D;
 
   protected constructor(type: ComponentType, name?: string) {
-    this.id = _uniqueId('boom_component_');
-    this.name = name ?? _uniqueId(`__${this.constructor.name}`);
+    this.id = _uniqueId(`boom_component_id_`);
+    this.name = name ?? _uniqueId(`_unnamed_${this.constructor.name}_`);
     this.type = type;
   }
 }

@@ -1,28 +1,27 @@
 ﻿import _first from 'lodash-es/first';
-import _filter from 'lodash-es/filter';
 import { Camera } from 'three';
 
-import { CameraComponent, ComponentType, IWorldUpdate } from '@/engine';
+import { BaseSystem, CameraComponent, ComponentType, IWorldUpdate } from '@/engine';
 import { World } from '@/game';
+import _flatMap from 'lodash-es/flatMap';
 
-export class CameraSystem implements IWorldUpdate {
-  private _cameras: CameraComponent[];
-
+export class CameraSystem extends BaseSystem implements IWorldUpdate {
   public current?: Camera;
 
   constructor() {
-    this._cameras = [];
+    super();
   }
 
   public update(world: World, _delta: number) {
-    this._cameras = _filter(
-      world.level.entities,
-      (e) => e.getComponentsByType<CameraComponent>(ComponentType.Camera).length > 0,
-    ).flatMap((e) => e.getComponentsByType<CameraComponent>(ComponentType.Camera));
+    super.register(world, ComponentType.Camera);
+
+    // Get all camera components registered
+    const components = _flatMap(this._entities, (e) =>
+      e.getComponentsByType<CameraComponent>(ComponentType.Camera),
+    );
 
     // Use the first camera found that is set to isCurrent - otherwise default to first camera found
-    const component = this._cameras.find((c) => c.isCurrent) ?? _first(this._cameras);
-    this.current = component?.instance;
+    this.current = components.find((c) => c.isCurrent)?.instance ?? _first(components)?.instance;
   }
 
   public getCurrent(): Camera {

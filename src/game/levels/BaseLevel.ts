@@ -1,8 +1,10 @@
 ﻿import { ColorRepresentation, Scene } from 'three';
 import _has from 'lodash-es/has';
 
-import { BaseEntity, IReady } from '@/engine';
-import _forEach from 'lodash-es/forEach';
+import { BaseEntity, ComponentType, IComponent, IReady } from '@/engine';
+import _flatMap from 'lodash-es/flatMap';
+import _filter from 'lodash-es/filter';
+import _map from 'lodash-es/map';
 
 export class BaseLevel extends Scene implements IReady {
   private readonly _entities: { [key: string]: BaseEntity };
@@ -19,24 +21,24 @@ export class BaseLevel extends Scene implements IReady {
   }
 
   public async ready() {
-    console.log('LEVEL READY!');
-    console.log(this.entities);
-
-    _forEach(this.entities, async (e) => {
-      await e.ready();
-      console.log(`${e.name} is ready!`);
-    });
+    await Promise.all(_map(this.entities, (e) => e.ready()));
   }
 
   public addGameEntity(entity: BaseEntity) {
     this._entities[entity.id] = entity;
-    this.add(entity);
   }
 
   public removeGameEntity(entity: BaseEntity) {
     if (_has(this._entities, entity.id)) {
       delete this._entities[entity.id];
-      this.remove(entity);
     }
+  }
+
+  public getEntitiesWithComponent(type: ComponentType): BaseEntity[] {
+    return _filter(this.entities, (e) => e.hasComponentWithType(type));
+  }
+
+  public getComponents<T extends IComponent>(type: ComponentType): T[] {
+    return _flatMap(this.entities, (e) => e.getComponentsByType<T>(type));
   }
 }
