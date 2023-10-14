@@ -5,17 +5,17 @@ import { BaseComponent, ComponentType } from '@/engine';
 export class CameraComponent extends BaseComponent {
   public instance: Camera;
 
-  public isCurrent: boolean = false;
+  public isActive: boolean;
 
   constructor(
-    name?: string,
+    isActive = false,
     fov: number = 75,
     aspect: number = 16.0 / 9.0,
-    near = 1.0,
+    near = 0.1,
     far = 5000,
   ) {
-    super(ComponentType.Camera, name);
-
+    super(ComponentType.Camera);
     this.instance = new PerspectiveCamera(fov, aspect, near, far);
+    this.isActive = isActive;
   }
 }

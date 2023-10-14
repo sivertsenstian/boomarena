@@ -1,17 +1,16 @@
 ﻿import { ColorRepresentation, HemisphereLight } from 'three';
 
-import { BaseComponent, ComponentType } from '@/engine';
+import { LightComponent } from '@/engine';
 
-export class HemisphereLightComponent extends BaseComponent {
-  public object: HemisphereLight;
+export class HemisphereLightComponent extends LightComponent {
+  public instance: HemisphereLight;
 
   constructor(
-    name: string,
     ground: ColorRepresentation = 0xffffff,
     sky: ColorRepresentation = 0x223344,
     intensity = 0.4,
   ) {
-    super(ComponentType.Light, name);
-    this.object = new HemisphereLight(sky, ground, intensity);
+    super();
+    this.instance = new HemisphereLight(sky, ground, intensity);
   }
 }

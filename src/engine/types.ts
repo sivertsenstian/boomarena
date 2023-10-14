@@ -1,6 +1,4 @@
-﻿import { WebGLRenderer } from 'three';
-
-import { InputEvent } from '@/engine';
+﻿import { InputEvent } from '@/engine';
 import { BaseLevel } from '@/game';
 
 export interface IReady {

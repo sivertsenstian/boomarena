@@ -1,7 +1,6 @@
 ﻿import {
   BoxGeometry,
   CapsuleGeometry,
-  Euler,
   FogExp2,
   MathUtils,
   Mesh,
@@ -16,31 +15,28 @@
 import {
   AmbientLightComponent,
   BaseEntity,
+  BodyComponent,
+  BodyType,
   CameraComponent,
-  CharacterBodyComponent,
+  Constants,
   DirectionalLightComponent,
   HemisphereLightComponent,
-  InputManager,
-  StaticBodyComponent,
-  TextureManager,
-  ModelManager,
-  MovementComponent,
   InputComponent,
-  Constants,
+  InputManager,
+  ModelComponent,
+  ModelManager,
+  TextureManager,
+  TransformComponent,
+  VelocityComponent,
 } from '@/engine';
 import { BaseLevel } from '@/game';
 
 class Player extends BaseEntity {
-  constructor() {
-    super();
-  }
-
   async ready() {
     const inputManager = InputManager.getInstance();
 
-    const camera = new CameraComponent('Camera');
-    camera.isCurrent = true;
-    this.addComponent(camera);
+    const camera = new CameraComponent(true);
+    this.add(camera);
 
     const model = new Mesh(
       new CapsuleGeometry(0.5, 1, 4, 8),
@@ -58,22 +54,26 @@ class Player extends BaseEntity {
     // Attach head to root model
     model.add(head);
 
-    const body = new CharacterBodyComponent({ name: 'PlayerModel', object: model });
-    this.addComponent(body);
+    const body = new ModelComponent({ object: model });
+    this.add(body);
 
-    const movement = new MovementComponent();
-    movement.speed = 0.015;
-    movement.position = new Vector3(0, 0.75, 0);
-    this.addComponent(movement);
+    const transform = new TransformComponent({ translation: new Vector3(0, 0.75, 0) });
+    this.add(transform);
 
-    const userInput = new InputComponent('UserInput', (delta: number) => {
+    const velocity = new VelocityComponent();
+    velocity.speed = 0.015;
+    this.add(velocity);
+
+    const userInput = new InputComponent((delta: number) => {
       const direction = inputManager?.getDirection('left', 'right', 'up', 'down');
       if (direction !== undefined) {
         const s = new Spherical();
         const angle = model.getWorldDirection(Constants.ZeroVector);
         s.setFromVector3(angle);
         direction.applyAxisAngle(Constants.UpVector, s.theta);
-        movement.position.addScaledVector(direction, movement.speed * delta);
+
+        // Separate velocity / position ??
+        transform.translation?.addScaledVector(direction, velocity.speed * delta);
       }
 
       const event = inputManager.getActiveActionEvent('look');
@@ -91,85 +91,106 @@ class Player extends BaseEntity {
         model.rotateY(-MathUtils.degToRad(x) * sens);
       }
     });
-    this.addComponent(userInput);
+    this.add(userInput);
+
+    this.add(new BodyComponent(BodyType.Character));
   }
 }
 
-class Environment extends BaseEntity {
-  constructor() {
-    super();
-  }
-
+class Tower extends BaseEntity {
   override async ready() {
     const manager = ModelManager.getInstance();
+
+    const tower = new ModelComponent({
+      object: await manager.loadGLTFModel('/models/tower/tower.gltf'),
+    });
+    this.add(
+      tower,
+      new BodyComponent(BodyType.Static),
+      new TransformComponent({
+        translation: new Vector3(-30, 14.0, -10),
+        // rotation: new Vector3(0, -Math.PI / 2, 0),
+      }),
+    );
+  }
+}
+
+class Floor extends BaseEntity {
+  override async ready(): Promise<void> {
     const texture = TextureManager.getInstance();
 
-    // Lights & Camera
-    this.addComponent(new AmbientLightComponent('Ambient', 0xffffff, 0.5));
-
-    const light = new DirectionalLightComponent('Light');
-    light.object.position.set(1, 1.5, 1).multiplyScalar(50);
-    light.object.shadow.mapSize.setScalar(2048);
-    light.object.shadow.bias = -1e-4;
-    light.object.shadow.normalBias = 0.05;
-    light.object.castShadow = true;
-
-    const shadowCam = light.object.shadow.camera;
-    shadowCam.bottom = shadowCam.left = -30;
-    shadowCam.top = 30;
-    shadowCam.right = 45;
-
-    this.addComponent(light);
-
-    const hemisphere = new HemisphereLightComponent('Hemisphere');
-    this.addComponent(hemisphere);
-
-    const camera = new CameraComponent('Camera');
-    camera.instance.position.set(10, 20, 10);
-    camera.instance.lookAt(new Vector3(0, 0, 0));
-    camera.isCurrent = false;
-    this.addComponent(camera);
-
-    // Floor
-    const bodyMap = texture.loadTexture('/textures/debug/orange/texture_04.png');
-    bodyMap.wrapS = bodyMap.wrapT = RepeatWrapping;
-    bodyMap.repeat.set(100, 100);
-    const body = new StaticBodyComponent({
-      name: 'Floor',
+    const floorTexture = texture.loadTexture('/textures/debug/light/texture_04.png');
+    floorTexture.wrapS = floorTexture.wrapT = RepeatWrapping;
+    floorTexture.repeat.set(100, 100);
+    const floor = new ModelComponent({
       material: new MeshBasicMaterial({
-        map: bodyMap,
+        map: floorTexture,
       }),
       geometry: new BoxGeometry(100, 1, 100),
     });
 
-    body.object.setRotationFromEuler(new Euler(0, Math.PI / 2, 0));
-    body.object.position.set(0, -0.5, 0);
-    this.addComponent(body);
+    this.add(
+      floor,
+      new BodyComponent(BodyType.Static),
+      new TransformComponent({
+        translation: new Vector3(0, -0.5, 0),
+        rotation: new Vector3(0, Math.PI / 2, 0),
+      }),
+    );
+  }
+}
 
-    // Debug Box
-    const boxMap = texture.loadTexture('/textures/debug/purple/texture_01.png');
-    boxMap.wrapS = boxMap.wrapT = RepeatWrapping;
-    boxMap.repeat.set(5, 5);
-    const box = new StaticBodyComponent({
-      name: 'DebugBox',
+class AmbientLight extends BaseEntity {
+  override async ready(): Promise<void> {
+    this.add(new AmbientLightComponent(0xffffff, 0.5));
+  }
+}
+
+class HemisphereLight extends BaseEntity {
+  override async ready(): Promise<void> {
+    this.add(new HemisphereLightComponent());
+  }
+}
+
+class Sun extends BaseEntity {
+  override async ready(): Promise<void> {
+    const light = new DirectionalLightComponent();
+    light.instance.position.set(1, 1.5, 1).multiplyScalar(50);
+    light.instance.shadow.mapSize.setScalar(2048);
+    light.instance.shadow.bias = -1e-4;
+    light.instance.shadow.normalBias = 0.05;
+    light.instance.castShadow = true;
+
+    const shadowCam = light.instance.shadow.camera;
+    shadowCam.bottom = shadowCam.left = -30;
+    shadowCam.top = 30;
+    shadowCam.right = 45;
+
+    this.add(light);
+  }
+}
+
+class Box extends BaseEntity {
+  override async ready() {
+    const texture = TextureManager.getInstance();
+
+    const boxTexture = texture.loadTexture('/textures/debug/light/texture_01.png');
+    boxTexture.wrapS = boxTexture.wrapT = RepeatWrapping;
+    boxTexture.repeat.set(50, 50);
+    const box = new ModelComponent({
       material: new MeshBasicMaterial({
-        map: boxMap,
+        map: boxTexture,
       }),
       geometry: new BoxGeometry(5, 5, 5),
     });
 
-    box.object.position.set(25, 2.5, 20);
-    this.addComponent(box);
-
-    // Import test - Tower
-    const tower = new StaticBodyComponent({
-      name: 'Tower',
-      object: await manager.loadGLTFModel('/models/tower/tower.gltf'),
-    });
-    tower.object.scale.multiplyScalar(5);
-    tower.object.position.set(-30, 9.0, -10);
-    tower.object.setRotationFromEuler(new Euler(0, -Math.PI / 2, 0));
-    this.addComponent(tower);
+    this.add(
+      box,
+      new BodyComponent(BodyType.Rigid),
+      new TransformComponent({
+        translation: new Vector3(20, 25, 20),
+      }),
+    );
   }
 }
 
@@ -190,8 +211,15 @@ export class PlayGroundLevel extends BaseLevel {
       'lf.png',
     ]);
 
-    this.addGameEntity(new Environment());
-    this.addGameEntity(new Player());
+    this.addEntity(
+      new Tower(),
+      new Box(),
+      new Floor(),
+      new AmbientLight(),
+      // new HemisphereLight(),
+      new Sun(),
+      new Player(),
+    );
 
     await super.ready();
   }

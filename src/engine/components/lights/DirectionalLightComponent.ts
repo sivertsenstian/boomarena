@@ -1,13 +1,13 @@
 ﻿import { ColorRepresentation, DirectionalLight } from 'three';
 
-import { BaseComponent, ComponentType } from "@/engine";
+import { LightComponent } from '@/engine';
 
-export class DirectionalLightComponent extends BaseComponent {
-  public object: DirectionalLight;
+export class DirectionalLightComponent extends LightComponent {
+  public instance: DirectionalLight;
 
-  constructor(name?: string, color: ColorRepresentation = 0xffffff, intensity = 1.0) {
-    super(ComponentType.Light, name);
+  constructor(color: ColorRepresentation = 0xffffff, intensity = 1.0) {
+    super();
 
-    this.object = new DirectionalLight(color, intensity);
+    this.instance = new DirectionalLight(color, intensity);
   }
 }

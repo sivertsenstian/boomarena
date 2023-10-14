@@ -1,10 +1,10 @@
-﻿import { BaseComponent, ComponentType } from '@/engine';
+﻿import { BaseComponent, ComponentType, IComponent } from '@/engine';
 
 export class InputComponent extends BaseComponent {
   public processInput: (delta: number) => void;
 
-  constructor(name: string, processInput: (delta: number) => void) {
-    super(ComponentType.Input, name);
+  constructor(processInput: (delta: number) => void) {
+    super(ComponentType.Input);
     this.processInput = processInput;
   }
 }

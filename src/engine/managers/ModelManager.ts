@@ -1,15 +1,25 @@
 ﻿import _has from 'lodash-es/has';
 
-import { Box3, Group, Mesh, MeshStandardMaterial, Object3D } from 'three';
+import {
+  Box3,
+  BufferGeometry,
+  Group,
+  Mesh,
+  MeshBasicMaterial,
+  MeshStandardMaterial,
+  NormalBufferAttributes,
+  Object3D,
+} from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { MeshBVH, StaticGeometryGenerator } from 'three-mesh-bvh';
 
 export class ModelManager {
   private static instance: ModelManager;
 
   private readonly _gltfModelLoader;
 
-  private readonly _models: { [path: string]: Object3D };
+  private readonly _models: { [path: string]: Mesh };
 
   private constructor() {
     this._models = {};
@@ -24,7 +34,25 @@ export class ModelManager {
     return ModelManager.instance;
   }
 
-  public loadGLTFModel(path: string): Promise<Object3D> {
+  private createCollider(geometry: BufferGeometry<NormalBufferAttributes>): Mesh {
+    const collider = new Mesh(geometry);
+    (collider.material as MeshBasicMaterial).color.set(0xffffff);
+    (collider.material as MeshBasicMaterial).wireframe = true;
+    (collider.material as MeshBasicMaterial).wireframeLinewidth = 5.0;
+    (collider.material as MeshBasicMaterial).opacity = 1.0;
+    (collider.material as MeshBasicMaterial).transparent = true;
+    return collider;
+  }
+
+  private mergeGeometry(object: Object3D): BufferGeometry<NormalBufferAttributes> {
+    const generator = new StaticGeometryGenerator(object);
+    generator.attributes = ['position'];
+    const geometry = generator.generate();
+    geometry.boundsTree = new MeshBVH(geometry);
+    return geometry;
+  }
+
+  public loadGLTFModel(path: string): Promise<Mesh> {
     return new Promise((resolve, reject) => {
       if (_has(this._models, path)) {
         resolve(this._models[path]);
@@ -68,6 +96,7 @@ export class ModelManager {
 
             if (visualGeometries.length) {
               const newGeom = BufferGeometryUtils.mergeGeometries(visualGeometries);
+              newGeom.scale(7, 7, 7);
               const newMesh = new Mesh(
                 newGeom,
                 new MeshStandardMaterial({ color: parseInt(hex), shadowSide: 2 }),
@@ -80,7 +109,23 @@ export class ModelManager {
             }
           }
 
-          resolve(environment);
+          const staticGenerator = new StaticGeometryGenerator(environment);
+          staticGenerator.attributes = ['position'];
+
+          const mergedGeometry = staticGenerator.generate();
+          // mergedGeometry.scale(7, 7, 7);
+          mergedGeometry.boundsTree = new MeshBVH(mergedGeometry);
+
+          const collider = new Mesh(mergedGeometry);
+          // collider.material.wireframe = true;
+          // collider.material.opacity = 0.5;
+          // collider.material.transparent = true;
+
+          //const visualizer = new MeshBVHVisualizer(collider, params.visualizeDepth);
+
+          // console.log(collider);
+
+          resolve(collider as Mesh);
         },
         undefined,
         (error) => reject(error),

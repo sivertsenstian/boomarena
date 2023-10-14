@@ -6,12 +6,14 @@
   InputSystem,
   IReady,
   IWorld,
+  LightSystem,
   PhysicsSystem,
+  RenderingSystem,
   StatsSystem,
+  AnimationSystem,
 } from '@/engine';
-import { BaseLevel } from './levels';
-import { RenderingSystem } from '@/engine/systems/RenderingSystem';
-import { MovementSystem } from '@/engine/systems/MovementSystem';
+import { BaseLevel } from '@/game';
+import { TransformSystem } from '@/engine/systems/TransformSystem';
 
 export class World implements IWorld, IReady {
   private _interval: number = 1000 / 60; // 60 fps
@@ -51,28 +53,37 @@ export class World implements IWorld, IReady {
   }
 
   start() {
-    const statsSystem = new StatsSystem();
-    const renderingSystem = new RenderingSystem(0.8, this.level.backgroundColor);
-    const cameraSystem = new CameraSystem();
-    const inputSystem = new InputSystem();
-    const collisionSystem = new CollisionSystem();
-    const movementSystem = new MovementSystem();
+    const stats = new StatsSystem();
+    const rendering = new RenderingSystem(0.8, this.level.backgroundColor);
+    const camera = new CameraSystem();
+    const input = new InputSystem();
+    const collisions = new CollisionSystem();
+    const transforms = new TransformSystem();
+    const lights = new LightSystem();
+    const animations = new AnimationSystem();
 
-    renderingSystem.getRenderer().setAnimationLoop((currentDelta) => {
-      statsSystem.update(currentDelta);
+    rendering.getRenderer().setAnimationLoop((currentDelta) => {
+      stats.update(currentDelta);
 
       const elapsed = currentDelta - this._previousDelta;
       if (elapsed > this._interval) {
         // Run systems
-        renderingSystem.update(this, elapsed);
-        cameraSystem.update(this, elapsed);
-        inputSystem.update(this, elapsed);
-        collisionSystem.update(this, elapsed);
+        input.update(this, elapsed);
+
+        collisions.update(this, elapsed);
+
+        transforms.update(this, elapsed);
+        animations.update(this, elapsed);
+
         this._physicsSystem.update(this, elapsed);
-        movementSystem.update(this, elapsed);
+
+        camera.update(this, elapsed);
+
+        lights.update(this, elapsed);
+        rendering.update(this, elapsed);
 
         this._previousDelta = currentDelta;
-        renderingSystem.getRenderer().render(this.level, cameraSystem.getCurrent());
+        rendering.getRenderer().render(this.level, camera.getActive());
       }
     });
   }

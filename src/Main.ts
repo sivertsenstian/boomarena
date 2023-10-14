@@ -1,4 +1,4 @@
-import { PlayGroundLevel, World } from '@/game';
+import { HelloWorldLevel, PlayGroundLevel, World } from '@/game';
 
 const world = new World(new PlayGroundLevel());
 world.ready().then(() => {

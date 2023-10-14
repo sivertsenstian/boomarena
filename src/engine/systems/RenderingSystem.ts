@@ -1,12 +1,16 @@
-﻿import { BaseSystem, ComponentType, GUIManager, IWorld, IWorldUpdate } from '@/engine';
-import { ColorRepresentation, PCFSoftShadowMap, SRGBColorSpace, WebGLRenderer } from 'three';
-import _forEach from 'lodash-es/forEach';
-import _isNil from 'lodash-es/isNil';
+﻿import { ColorRepresentation, PCFSoftShadowMap, SRGBColorSpace, WebGLRenderer } from 'three';
+
+import {
+  BaseSystem,
+  ComponentType,
+  GUIManager,
+  IWorld,
+  IWorldUpdate,
+  ModelComponent,
+} from '@/engine';
 
 export class RenderingSystem extends BaseSystem implements IWorldUpdate {
   private readonly _renderer: WebGLRenderer;
-
-  private readonly _added: { [key: string]: boolean };
 
   public getRenderer() {
     return this._renderer;
@@ -14,8 +18,6 @@ export class RenderingSystem extends BaseSystem implements IWorldUpdate {
 
   constructor(scalar: number, clearColor: ColorRepresentation = 0x000000) {
     super();
-
-    this._added = {};
 
     const gui = GUIManager.getInstance();
     const folder = gui.addFolder('World');
@@ -45,20 +47,10 @@ export class RenderingSystem extends BaseSystem implements IWorldUpdate {
   }
 
   update(world: IWorld, _delta: number): void {
-    const types = [ComponentType.CharacterBody, ComponentType.StaticBody, ComponentType.Light];
-    super.register(world, ...types);
-
-    // Process all entities
-    _forEach(this._entities, (entity) => {
-      if (!this._added?.[entity.id]) {
-        types.forEach((type) => {
-          this._added[entity.id] = true;
-          entity
-            .getComponentsByType(type)
-            .filter((c) => !_isNil(c.object))
-            .forEach((c) => world.level.add(c.object!));
-        });
-      }
+    super.register(world, false, ComponentType.Model);
+    this.initialize((entity) => {
+      const model = entity.get<ModelComponent>(ComponentType.Model);
+      world.level.add(model.instance);
     });
   }
 

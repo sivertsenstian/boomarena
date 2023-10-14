@@ -5,5 +5,7 @@ export * from './InputSystem';
 export * from './CollisionSystem';
 export * from './PhysicsSystem';
 export * from './RenderingSystem';
+export * from './LightSystem';
 export * from './StatsSystem';
+export * from './AnimationSystem';
 export * from './types';
